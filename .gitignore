@@ -1,0 +1,25 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Env / secrets
+.env
+.env.*
+
+# AgentCore CLI state (auto-managed; contains account-specific state)
+agentcore/.cli/
+.bedrock_agentcore.yaml
+deployed-state.json
+
+# Build artefacts
+dist/
+*.zip
+
+# Runtime output (regenerated on every triage run)
+proposals.jsonl
+
+# Node cruft from the CLI tooling
+node_modules/

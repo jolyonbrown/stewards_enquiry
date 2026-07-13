@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "2.0",
+  "accountId": "111122223333",
+  "region": "eu-west-2",
+  "partition": "aws",
+  "id": "f-tor-recon-0003",
+  "arn": "arn:aws:guardduty:eu-west-2:111122223333:detector/00b0000000example/finding/f-tor-recon-0003",
+  "type": "Recon:IAMUser/TorIPCaller",
+  "severity": 5.0,
+  "createdAt": "2026-07-13T07:52:33.000Z",
+  "updatedAt": "2026-07-13T08:05:10.000Z",
+  "title": "API DescribeInstances was invoked from a Tor exit node IP address 198.51.100.77.",
+  "description": "APIs commonly used in reconnaissance were invoked by IAM user svc-scanner from Tor exit node IP address 198.51.100.77. Tor may be used to anonymise the caller's true identity.",
+  "resource": {
+    "resourceType": "AccessKey",
+    "accessKeyDetails": {
+      "accessKeyId": "AKIAIOSFODNN7EXAMPLE",
+      "principalId": "AIDAEXAMPLESCANNER00",
+      "userType": "IAMUser",
+      "userName": "svc-scanner"
+    }
+  },
+  "service": {
+    "serviceName": "guardduty",
+    "detectorId": "00b0000000example",
+    "action": {
+      "actionType": "AWS_API_CALL",
+      "awsApiCallAction": {
+        "api": "DescribeInstances",
+        "serviceName": "ec2.amazonaws.com",
+        "callerType": "Remote IP",
+        "remoteIpDetails": {
+          "ipAddressV4": "198.51.100.77",
+          "organization": {
+            "asn": "64499",
+            "asnOrg": "EXAMPLE-RELAYNET",
+            "isp": "RelayNet",
+            "org": "RelayNet"
+          },
+          "country": { "countryName": "Germany" },
+          "city": { "cityName": "Frankfurt am Main" },
+          "geoLocation": { "lat": 50.11, "lon": 8.68 }
+        },
+        "affectedResources": {}
+      }
+    },
+    "eventFirstSeen": "2026-07-13T07:52:33.000Z",
+    "eventLastSeen": "2026-07-13T08:05:10.000Z",
+    "count": 14,
+    "additionalInfo": {
+      "value": "{\"apiCalls\":[{\"name\":\"DescribeInstances\",\"count\":9},{\"name\":\"DescribeSecurityGroups\",\"count\":4},{\"name\":\"GetCallerIdentity\",\"count\":1}],\"sample\":true}",
+      "type": "default"
+    }
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "_comment": "Canned CloudTrail events keyed by principal, for query_cloudtrail in fixture mode. Deliberately ambiguous for svc-scanner: read-only recon pattern, but the account has a history of scheduled scans from conventional IPs — enough signal to justify needs_human rather than a confident verdict either way.",
+  "svc-scanner": [
+    {
+      "eventTime": "2026-07-13T07:52:41Z",
+      "eventName": "DescribeInstances",
+      "eventSource": "ec2.amazonaws.com",
+      "sourceIPAddress": "198.51.100.77",
+      "awsRegion": "eu-west-2",
+      "errorCode": null
+    },
+    {
+      "eventTime": "2026-07-13T07:53:02Z",
+      "eventName": "DescribeSecurityGroups",
+      "eventSource": "ec2.amazonaws.com",
+      "sourceIPAddress": "198.51.100.77",
+      "awsRegion": "eu-west-2",
+      "errorCode": null
+    },
+    {
+      "eventTime": "2026-07-13T07:55:47Z",
+      "eventName": "GetCallerIdentity",
+      "eventSource": "sts.amazonaws.com",
+      "sourceIPAddress": "198.51.100.77",
+      "awsRegion": "eu-west-2",
+      "errorCode": null
+    },
+    {
+      "eventTime": "2026-07-13T07:58:19Z",
+      "eventName": "ListBuckets",
+      "eventSource": "s3.amazonaws.com",
+      "sourceIPAddress": "198.51.100.77",
+      "awsRegion": "eu-west-2",
+      "errorCode": "AccessDenied"
+    },
+    {
+      "eventTime": "2026-07-12T02:00:04Z",
+      "eventName": "DescribeInstances",
+      "eventSource": "ec2.amazonaws.com",
+      "sourceIPAddress": "192.0.2.140",
+      "awsRegion": "eu-west-2",
+      "errorCode": null
+    },
+    {
+      "eventTime": "2026-07-11T02:00:05Z",
+      "eventName": "DescribeInstances",
+      "eventSource": "ec2.amazonaws.com",
+      "sourceIPAddress": "192.0.2.140",
+      "awsRegion": "eu-west-2",
+      "errorCode": null
+    }
+  ],
+  "web-tier-profile": [
+    {
+      "eventTime": "2026-07-12T05:12:33Z",
+      "eventName": "GetObject",
+      "eventSource": "s3.amazonaws.com",
+      "sourceIPAddress": "10.20.1.57",
+      "awsRegion": "eu-west-2",
+      "errorCode": null
+    }
+  ],
+  "batch-worker-profile": [
+    {
+      "eventTime": "2026-07-12T23:41:09Z",
+      "eventName": "GetAuthorizationToken",
+      "eventSource": "ecr.amazonaws.com",
+      "sourceIPAddress": "10.20.4.19",
+      "awsRegion": "eu-west-2",
+      "errorCode": null
+    },
+    {
+      "eventTime": "2026-07-13T00:02:51Z",
+      "eventName": "DescribeInstances",
+      "eventSource": "ec2.amazonaws.com",
+      "sourceIPAddress": "10.20.4.19",
+      "awsRegion": "eu-west-2",
+      "errorCode": "Client.UnauthorizedOperation"
+    }
+  ]
+}

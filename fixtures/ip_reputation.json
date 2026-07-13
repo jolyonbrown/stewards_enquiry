@@ -1,0 +1,35 @@
+{
+  "_comment": "Offline reputation data for lookup_ip. Keys are IPs; '_default' is returned on miss. All IPs are from RFC 5737 documentation ranges.",
+  "203.0.113.42": {
+    "reputation": "malicious",
+    "score": 97,
+    "reports_90d": 1243,
+    "tags": ["ssh-bruteforce", "botnet", "scanner"],
+    "first_seen": "2026-03-02",
+    "last_seen": "2026-07-12"
+  },
+  "198.51.100.77": {
+    "reputation": "tor-exit-node",
+    "score": 55,
+    "reports_90d": 12,
+    "tags": ["tor", "anonymiser"],
+    "first_seen": "2025-11-19",
+    "last_seen": "2026-07-13"
+  },
+  "192.0.2.140": {
+    "reputation": "clean",
+    "score": 2,
+    "reports_90d": 0,
+    "tags": ["cloud-provider"],
+    "first_seen": "2026-05-30",
+    "last_seen": "2026-07-13"
+  },
+  "_default": {
+    "reputation": "unknown",
+    "score": 0,
+    "reports_90d": 0,
+    "tags": [],
+    "first_seen": null,
+    "last_seen": null
+  }
+}
