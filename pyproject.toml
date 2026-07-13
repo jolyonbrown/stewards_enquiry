@@ -1,0 +1,34 @@
+# Dev-tooling root. The deployable agent lives in app/stewards_enquiry with a
+# self-contained pyproject.toml — that file is what AgentCore's CodeZip
+# packaging reads, and `agentcore dev` manages its own venv inside that
+# directory (so it must NOT be a uv workspace member). The root installs the
+# agent editable for tests and lint.
+
+[project]
+name = "stewards-enquiry-dev"
+version = "0.0.0"
+requires-python = ">=3.12"
+dependencies = ["stewards-enquiry"]
+
+[tool.uv.sources]
+stewards-enquiry = { path = "app/stewards_enquiry", editable = true }
+
+[tool.uv]
+package = false
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "ruff>=0.11",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["app/stewards_enquiry"]

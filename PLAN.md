@@ -12,20 +12,30 @@ phase's **AC notes**.
 
 ## Phase 0 — Scaffold and hello-agent (timebox: 1.5h)
 
-- [ ] Verify current AgentCore CLI behaviour (`agentcore --help`, current docs);
+- [x] Verify current AgentCore CLI behaviour (`agentcore --help`, current docs);
       record any deviations from CLAUDE.md in `docs/DEVIATIONS.md`
-- [ ] Scaffold the project with the AgentCore CLI (agent name
+- [x] Scaffold the project with the AgentCore CLI (agent name
       `StewardsEnquiry` — no apostrophe, CLI/resource names won't like it),
       Python, direct code deploy, HTTP protocol
-- [ ] Merge scaffold with this repo's layout; `uv sync`; ruff + pytest wired
-- [ ] Minimal entrypoint: `/invocations` echoes a canned response;
+- [x] Merge scaffold with this repo's layout; `uv sync`; ruff + pytest wired
+- [x] Minimal entrypoint: `/invocations` echoes a canned response;
       `/ping` healthy
-- [ ] `agentcore dev` runs; local invoke returns the canned response
+- [x] `agentcore dev` runs; local invoke returns the canned response
 
 **Acceptance:** fresh clone → `uv sync` → `agentcore dev` → local invoke
 succeeds with zero AWS credentials.
 
-**AC notes:** _(fill in)_
+**AC notes:** Done 2026-07-14. Major CLI drift found and recorded in
+`docs/DEVIATIONS.md`: the Python starter toolkit is deprecated; scaffolded
+with `@aws/agentcore` 0.24.1 (npm), `--build CodeZip` (the successor to
+"direct code deploy"), HTTP protocol, Strands/Bedrock, no memory. Deploys are
+CDK-managed via `agentcore/`. Python pinned 3.12 (runtime now supports up to
+3.14). `uv sync` + `uv run pytest` (1 test) + ruff all green offline.
+`agentcore dev --logs --skip-deploy` with AWS env vars stripped: `GET /ping` →
+`{"status":"Healthy"}`; `POST /invocations {"finding_id":"ssh-bruteforce"}` →
+canned echo. Gotchas for later phases: `agentcore dev` manages its own venv
+inside the app dir (root pyproject uses an editable path dep, NOT a uv
+workspace), and CLI invokes wrap text input as `{"prompt": "<string>"}`.
 
 ---
 

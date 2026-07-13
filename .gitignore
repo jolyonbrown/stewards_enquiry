@@ -9,10 +9,8 @@ __pycache__/
 .env
 .env.*
 
-# AgentCore CLI state (auto-managed; contains account-specific state)
-agentcore/.cli/
-.bedrock_agentcore.yaml
-deployed-state.json
+# AgentCore CLI state is governed by agentcore/.gitignore (which deliberately
+# commits agentcore/.cli/deployed-state.json — see docs/DEVIATIONS.md #4)
 
 # Build artefacts
 dist/
