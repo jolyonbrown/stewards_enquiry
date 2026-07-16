@@ -38,12 +38,42 @@ giving it enough to be dangerous. This demo takes a position:
 
 ## Quickstart (offline — no AWS account needed)
 
+### Prerequisites
+
+- **uv** — `curl -LsSf https://astral.sh/uv/install.sh | sh`
+- **AgentCore CLI** — Node 18+, then `npm install -g @aws/agentcore`
+
+> ⚠️ Install the CLI from **npm**, not pip. The pip package
+> (`bedrock-agentcore-starter-toolkit`) is the deprecated starter toolkit and
+> installs a different, unsupported `agentcore` binary. Details in
+> `docs/DEVIATIONS.md`.
+
+Python 3.12 is fetched automatically by uv (pinned in `.python-version`) —
+it does not need to be preinstalled.
+
+### Run
+
 ```bash
-uv sync
-# run the agent locally against a bundled finding
-agentcore dev            # in one terminal
-# invoke with a fixture finding id (see fixtures/findings/)
-# TODO(Phase 2): exact invoke command
+uv sync                              # one-time: create the venv, install deps
+
+agentcore dev --logs --skip-deploy   # terminal 1: local dev server on :8080
+
+# terminal 2: invoke with a fixture finding id (see fixtures/findings/)
+curl -s -X POST http://localhost:8080/invocations \
+  -H 'Content-Type: application/json' \
+  -d '{"finding_id": "ssh-bruteforce"}'
+```
+
+`--skip-deploy` stops `agentcore dev` attempting to provision cloud resources
+first; `--logs` gives a plain log stream instead of the browser chat UI.
+Until Phase 2 lands, the response is a canned echo — the triage loop
+replaces it.
+
+### Test
+
+```bash
+uv run pytest        # offline, deterministic
+uv run ruff check .
 ```
 
 Three bundled findings, three intended outcomes:
