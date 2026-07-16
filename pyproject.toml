@@ -29,6 +29,9 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
 
+[tool.ruff.lint.isort]
+known-first-party = ["main", "telemetry", "tools"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["app/stewards_enquiry"]
