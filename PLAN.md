@@ -76,9 +76,9 @@ planted `stop_instances` call.
 
 ## Phase 2 — Triage loop and verdicts (timebox: 3h)
 
-- [ ] Strands agent (or boto3 fallback per CLAUDE.md timebox rule) with the
+- [x] Strands agent (or boto3 fallback per CLAUDE.md timebox rule) with the
       four tools and the triage-policy system prompt
-- [ ] Verdict construction + validation against `schemas/verdict.schema.json`;
+- [x] Verdict construction + validation against `schemas/verdict.schema.json`;
       fail-closed path emits `needs_human` on validation failure
 - [ ] Run all three fixture findings end-to-end; save outputs to
       `tests/golden/`
@@ -88,13 +88,26 @@ planted `stop_instances` call.
   - `crypto-mining` → `true_positive`, high severity, stop-instance proposal
   - `tor-recon` → `needs_human` (plausibly an authorised scan), no
     containment proposal
-- [ ] Golden-file test comparing verdict structure and classes
+- [x] Golden-file test comparing verdict structure and classes (written;
+      skips until goldens are recorded)
 
 **Acceptance:** three findings in, three schema-valid verdicts out, matching
 the intended verdict classes; `proposals.jsonl` contains only
 `pending_approval` entries.
 
-**AC notes:** _(fill in)_
+**AC notes:** Offline parts done 2026-07-16 on branch `phase-2` (80 tests
+green + 3 golden skips, no credentials). `prompts.py` encodes the triage
+policy; `triage.py` builds a fresh Strands agent per triage (model injectable,
+default Claude-on-Bedrock via BEDROCK_MODEL_ID env — verified strands `tool()`
+wraps the traced functions with correct specs); `verdict.py` validates or
+fails closed to `needs_human` (broad catch: model errors, unparseable output,
+schema violations — never free text, never an exception); `main.py` accepts
+both `{"finding_id": ...}` and the CLI `{"prompt": "<text>"}` wrapper. Every
+triage emits a structured verdict log line. **Remaining for acceptance:** run
+`uv run python scripts/record_goldens.py` with AWS creds + Bedrock model
+access to record `tests/golden/*.verdict.json` (script refuses to record
+fail-closed verdicts), then confirm the golden test enforces the intended
+classes and `proposals.jsonl` holds only `pending_approval` entries.
 
 ---
 
