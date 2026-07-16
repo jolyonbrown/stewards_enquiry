@@ -93,3 +93,17 @@ def test_return_value_is_deterministic():
     first = propose_containment(action="no_action", **VALID_ARGS)
     second = propose_containment(action="no_action", **VALID_ARGS)
     assert first == second
+
+
+@pytest.mark.parametrize("field", ["justification", "risk_if_wrong"])
+def test_schema_length_limit_is_enforced_at_the_boundary(field, isolated_proposals_file):
+    at_limit = dict(VALID_ARGS, **{field: "x" * 400})
+    proposal = propose_containment(action="no_action", **at_limit)
+    assert len(proposal[field]) == 400
+
+    over_limit = dict(VALID_ARGS, **{field: "x" * 401})
+    with pytest.raises(ValueError, match="400-character limit"):
+        propose_containment(action="no_action", **over_limit)
+    # the rejected proposal never reached disk
+    lines = isolated_proposals_file.read_text().splitlines()
+    assert len(lines) == 1

@@ -27,7 +27,7 @@ def query_cloudtrail(principal: str, hours: int = 24) -> list[dict]:
         raise ValueError("hours must be a positive integer")
     table = json.loads((fixtures_dir() / "cloudtrail_events.json").read_text())
     events = table.get(principal)
-    if not isinstance(events, list):  # unknown principal, or a metadata key
+    if not isinstance(events, list) or not events:  # unknown, metadata key, or idle
         return []
 
     def when(event: dict) -> datetime:

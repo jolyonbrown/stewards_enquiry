@@ -52,6 +52,10 @@ def propose_containment(action: str, target: str, justification: str, risk_if_wr
     ):
         if not value or not value.strip():
             raise ValueError(f"{name} must be a non-empty string")
+    # Mirror the schema's maxLength so no invalid proposal ever reaches disk.
+    for name, value in (("justification", justification), ("risk_if_wrong", risk_if_wrong)):
+        if len(value) > 400:
+            raise ValueError(f"{name} exceeds the schema's 400-character limit ({len(value)})")
 
     proposal = {
         "action": action,
