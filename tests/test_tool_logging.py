@@ -55,3 +55,16 @@ def test_raw_input_never_appears_in_the_log_line(caplog):
         lookup_ip("203.0.113.42")
 
     assert "203.0.113.42" not in caplog.records[-1].message
+
+
+def test_tool_lines_are_visible_under_default_config_after_configure_logging(caplog):
+    """PR #1 review finding: INFO lines were dropped at the root WARNING
+    threshold in real runs, and at_level in tests concealed it. After
+    configure_logging() (called by main.py), lines must flow with NO
+    explicit level manipulation here."""
+    from telemetry import configure_logging
+
+    configure_logging()
+    lookup_ip("203.0.113.42")
+
+    assert any(r.name == "stewards_enquiry.tools" for r in caplog.records)

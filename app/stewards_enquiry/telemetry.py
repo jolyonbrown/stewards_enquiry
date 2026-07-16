@@ -18,6 +18,19 @@ from typing import Any
 logger = logging.getLogger("stewards_enquiry.tools")
 
 
+def configure_logging() -> None:
+    """Make stewards_enquiry.* log lines visible under any runtime.
+
+    Without this the namespace inherits the root logger's WARNING threshold
+    and every INFO tool line is silently dropped. Called from main.py; safe
+    to call repeatedly; leaves existing root handlers (uvicorn, AgentCore)
+    untouched.
+    """
+    if not logging.getLogger().handlers:
+        logging.basicConfig(level=logging.INFO, format="%(message)s")
+    logging.getLogger("stewards_enquiry").setLevel(logging.INFO)
+
+
 def input_digest(*args: Any, **kwargs: Any) -> str:
     """Short, stable digest of a tool's input, for audit correlation."""
     payload = json.dumps({"args": args, "kwargs": kwargs}, sort_keys=True, default=str)

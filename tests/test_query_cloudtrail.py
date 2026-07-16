@@ -35,6 +35,13 @@ def test_metadata_key_returns_empty_list():
     assert query_cloudtrail("_comment") == []
 
 
+def test_known_principal_with_no_activity_returns_empty_list(monkeypatch, tmp_path):
+    (tmp_path / "cloudtrail_events.json").write_text(json.dumps({"idle-principal": []}))
+    monkeypatch.setenv("STEWARD_FIXTURES_DIR", str(tmp_path))
+
+    assert query_cloudtrail("idle-principal") == []
+
+
 def test_capped_at_50_events(monkeypatch, tmp_path):
     events = [
         {

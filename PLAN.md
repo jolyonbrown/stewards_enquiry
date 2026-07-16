@@ -119,6 +119,9 @@ classes and `proposals.jsonl` holds only `pending_approval` entries.
       inference profile via `aws bedrock list-inference-profiles`); confirm
       model access is enabled in the Bedrock console
 - [ ] Create the read-only execution role per CLAUDE.md IAM section
+- [ ] Set `STEWARD_PROPOSALS_PATH` to a writable location for the deployed
+      runtime (default is CWD-relative; workdir may be read-only) — PR #1
+      review finding
 - [ ] `agentcore deploy` (direct code deploy); resolve any ARM64 wheel issues
       with the uv platform flags from CLAUDE.md
 - [ ] Enable observability (CloudWatch Transaction Search per current docs);

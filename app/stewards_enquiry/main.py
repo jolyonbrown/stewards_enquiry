@@ -16,9 +16,11 @@ from typing import Any
 
 from bedrock_agentcore.runtime import BedrockAgentCoreApp
 
+from telemetry import configure_logging
 from triage import run_triage
 from verdict import fail_closed_verdict
 
+configure_logging()
 app = BedrockAgentCoreApp()
 
 
