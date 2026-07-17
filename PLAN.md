@@ -41,22 +41,36 @@ workspace), and CLI invokes wrap text input as `{"prompt": "<string>"}`.
 
 ## Phase 1 — Tools against fixtures (timebox: 2.5h)
 
-- [ ] `get_finding` loads from `fixtures/findings/` by finding `id`
-- [ ] `lookup_ip` reads `fixtures/ip_reputation.json` with `_default` fallback
-- [ ] `query_cloudtrail` filters `fixtures/cloudtrail_events.json` by
+- [x] `get_finding` loads from `fixtures/findings/` by finding `id`
+- [x] `lookup_ip` reads `fixtures/ip_reputation.json` with `_default` fallback
+- [x] `query_cloudtrail` filters `fixtures/cloudtrail_events.json` by
       principal + time window, capped at 50 events
-- [ ] `propose_containment` appends to `proposals.jsonl` and returns the
+- [x] `propose_containment` appends to `proposals.jsonl` and returns the
       proposal; unit test asserts it can never emit `status` other than
       `pending_approval`
-- [ ] Structured JSON log line per tool call (tool, input digest, duration,
+- [x] Structured JSON log line per tool call (tool, input digest, duration,
       outcome)
-- [ ] `scripts/verify_readonly.sh` greps for mutating boto3 verbs; wire into
+- [x] `scripts/verify_readonly.sh` greps for mutating boto3 verbs; wire into
       pytest or a make target
-- [ ] Unit tests per tool; all deterministic and offline
+- [x] Unit tests per tool; all deterministic and offline
 
 **Acceptance:** `pytest` green offline; each tool demonstrably deterministic.
 
-**AC notes:** _(fill in)_
+**AC notes:** Done 2026-07-16 on branch `phase-1`. 45 tests green offline
+(44 new + Phase 0's). One module per tool in `app/stewards_enquiry/tools/`;
+`telemetry.traced` decorator emits one JSON line per call (tool, 12-char
+input digest — never the raw input — duration, outcome, including on error).
+Determinism choice: `query_cloudtrail`'s window anchors on the principal's
+newest fixture event, not wall-clock now, so offline runs don't decay as
+fixtures age. `propose_containment` returns exactly the verdict-schema
+`proposed_actions` shape (status/requires_approval are constants, no
+parameter can override them; enum-sync test pins it to the schema); the JSONL
+record adds proposal_id + created_at audit fields, path overridable via
+STEWARD_PROPOSALS_PATH. STEWARD_LIVE=1 raises NotImplementedError (stretch C)
+rather than silently serving fixtures. verify_readonly.sh covers boto3
+snake_case and aws-CLI kebab-case mutating verbs, excludes vendored code,
+runs inside pytest, and was probe-tested to confirm it actually fails on a
+planted `stop_instances` call.
 
 ---
 
@@ -92,6 +106,9 @@ the intended verdict classes; `proposals.jsonl` contains only
       inference profile via `aws bedrock list-inference-profiles`); confirm
       model access is enabled in the Bedrock console
 - [ ] Create the read-only execution role per CLAUDE.md IAM section
+- [ ] Set `STEWARD_PROPOSALS_PATH` to a writable location for the deployed
+      runtime (default is CWD-relative; workdir may be read-only) — PR #1
+      review finding
 - [ ] `agentcore deploy` (direct code deploy); resolve any ARM64 wheel issues
       with the uv platform flags from CLAUDE.md
 - [ ] Enable observability (CloudWatch Transaction Search per current docs);

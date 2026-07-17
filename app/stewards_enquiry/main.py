@@ -8,6 +8,9 @@ from typing import Any
 
 from bedrock_agentcore.runtime import BedrockAgentCoreApp
 
+from telemetry import configure_logging
+
+configure_logging()
 app = BedrockAgentCoreApp()
 
 
