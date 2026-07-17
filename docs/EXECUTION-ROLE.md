@@ -8,17 +8,35 @@ Role: `AgentCore-StewardsEnquiry-ApplicationAgentStewardsE-*` (created by the
 
 | Grant | Scope | Assessment |
 |---|---|---|
-| `bedrock:InvokeModel`, `InvokeModelWithResponseStream`, `CountTokens` | This account's inference profiles + foundation models | Required — the only way the agent reasons |
-| `logs:*` (create/put/describe/filter/get on log streams) | `/aws/bedrock-agentcore/runtimes/*` log groups only | Required — invariant 5 (traceability) |
+| `bedrock:InvokeModel`, `InvokeModelWithResponseStream`, `CountTokens` | **All** inference profiles in the account + all foundation models | Required in kind, **broader than needed in scope** — the agent uses exactly one committed profile. AWS supports pinning to that profile + its destination model ARNs. Follow-up #3. |
+| `logs:CreateLogGroup/CreateLogStream/PutLogEvents/Describe*` | `/aws/bedrock-agentcore/runtimes/*` | Required — invariant 5 (traceability) |
+| `logs:FilterLogEvents`, `logs:GetLogEvents` | `/aws/bedrock-agentcore/runtimes/*` (all runtimes, not just this one) | **Surplus.** Emitting telemetry needs write, not read; this lets the runtime read sibling runtimes' logs. Immaterial today (this is the only runtime in the account) but wrong in principle. Follow-up #2. |
 | `xray:PutTelemetryRecords`, `PutTraceSegments`; `logs:DescribeLogGroups` | `*` | Required for OTel traces; X-Ray has no resource-level scoping |
-| `bedrock-agentcore:*ConfigurationBundle*` (incl. Create/Update/Delete) | `configuration-bundle/*` resources | **Surplus.** Construct default for a feature this project does not use. The codebase never calls these APIs (invariant 1 governs the code, and the CI guard enforces that); this is unused standing IAM privilege on the deployed principal — a real but bounded mutation capability, limited to AgentCore's own config-bundle store with no reach into any security-relevant resource. Tracked as a deliberate, documented exception rather than silently accepted. |
+| `bedrock-agentcore:*ConfigurationBundle*` (incl. Create/Update/Delete) | `configuration-bundle/*` | **Surplus, and the sharpest wart.** Construct default for a feature this project does not use; Create/Update/Delete are write operations on a store that can hold prompts and tool descriptions. The codebase never calls these APIs (CI-enforced), but unused standing write privilege should be removed, not merely documented. Follow-up #1. |
+
+## Follow-ups (open, from PR #3 review)
+
+1. Strip the configuration-bundle statement from the construct-generated
+   policy (CDK override/aspect) — remove, don't document.
+2. Drop `FilterLogEvents`/`GetLogEvents`, or scope them to this runtime's
+   own log group.
+3. Pin Bedrock invocation to the one committed inference profile and its
+   destination model ARNs.
+
+These are deliberately deferred, not disputed: they require overriding
+vendor-construct defaults and a redeploy, and were found on demo day. The
+role's *reach* is unchanged by all three: no security-service data, no
+containment-target resources.
 
 ## What is deliberately absent
 
 No `guardduty:*`, no `cloudtrail:*`, no `ec2:*`, no `s3:*`, no `iam:*` — nothing.
-The deployed agent **cannot read any security data from the account** (it
-triages the bundled fixtures) and cannot touch any resource a containment
-action would target. The brief's read-only policy
+The deployed agent **cannot read any security-service data from the
+account** — no findings, no audit trails, no instance inventory (it triages
+the bundled fixtures) — and cannot touch any resource a containment action
+would target. (Precision note: it *can* read AgentCore runtime log groups —
+see the surplus row above — which is operational telemetry, not account
+security data.) The brief's read-only policy
 (`guardduty:GetFindings`, `guardduty:ListFindings`, `cloudtrail:LookupEvents`,
 `ec2:DescribeInstances`) is specified for **live mode only**, which is stretch
 goal C — granting it now would be unused standing privilege, so it is not

@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 # End-to-end proof, one command:
 #   offline suite -> fresh package + deploy (new immutable runtime version)
-#   -> remote triage of all three bundled findings -> verdict classes
-#   checked against the committed goldens.
+#   -> remote triage of all three bundled findings -> each remote verdict
+#   schema+policy validated, checked against the committed golden's
+#   finding_id and the suite's expected verdict class / action policy.
+#
+# A fail-closed response, a swapped response, or a disproportionate proposal
+# set FAILS the run (PR #3 review: class-only comparison was spoofable).
 #
 # Needs: AWS credentials (e.g. AWS_PROFILE=limilo), region with AgentCore
 # support configured in agentcore/aws-targets.json. Run from anywhere:
@@ -29,45 +33,67 @@ fi
 echo "== 3/4 remote triage of the three bundled findings =="
 for finding in ssh-bruteforce crypto-mining tor-recon; do
     echo "-- invoking for $finding"
-    agentcore invoke "{\"finding_id\": \"$finding\"}" | tee "$OUT_DIR/$finding.out"
-    echo
+    agentcore invoke --json "{\"finding_id\": \"$finding\"}" > "$OUT_DIR/$finding.json"
 done
 
-echo "== 4/4 remote verdict classes vs committed goldens =="
+echo "== 4/4 remote verdicts vs goldens + suite policy =="
 uv run python - "$OUT_DIR" <<'PY'
 import json
 import sys
 from pathlib import Path
 
+sys.path.insert(0, "app/stewards_enquiry")
+sys.path.insert(0, "tests")
+from test_golden_verdicts import EXPECTED  # the same policy the suite enforces
+from verdict import validate_verdict
+
 out_dir = Path(sys.argv[1])
 failures = []
-for stem in ("ssh-bruteforce", "crypto-mining", "tor-recon"):
-    want = json.loads(Path(f"tests/golden/{stem}.verdict.json").read_text())["verdict"]
-    text = (out_dir / f"{stem}.out").read_text()
-    start, end = text.find("{"), text.rfind("}")
-    if start == -1 or end <= start:
-        print(f"{stem}: NO JSON IN RESPONSE")
-        failures.append(stem)
-        continue
+for stem, policy in EXPECTED.items():
+    label = f"{stem}:"
     try:
-        verdict = json.loads(text[start : end + 1])
-    except json.JSONDecodeError as exc:
-        # e.g. CLI banner or metadata objects around the verdict (PR #3 review)
-        print(f"{stem}: UNPARSEABLE RESPONSE ({exc})")
+        envelope = json.loads((out_dir / f"{stem}.json").read_text())
+        assert envelope.get("success") is True, "invoke envelope reported failure"
+        remote = json.loads(envelope["response"])
+        validate_verdict(remote)  # full schema + cross-field policy
+
+        golden = json.loads(Path(f"tests/golden/{stem}.verdict.json").read_text())
+        problems = []
+        if remote["summary"].startswith("Automated triage could not produce"):
+            problems.append("fail-closed verdict, not a real triage")
+        if remote["finding_id"] != golden["finding_id"]:
+            problems.append(f"finding_id {remote['finding_id']!r} != {golden['finding_id']!r}")
+        if remote["verdict"] != policy["verdict"]:
+            problems.append(f"verdict {remote['verdict']!r}, expected {policy['verdict']!r}")
+        if "severity" in policy and remote["severity_assessment"] not in policy["severity"]:
+            problems.append(f"severity {remote['severity_assessment']!r} outside {policy['severity']}")
+
+        proposed = {a["action"] for a in remote["proposed_actions"]}
+        if policy["actions"]:
+            if not proposed:
+                problems.append("expected a containment proposal, got none")
+            elif not proposed <= policy["actions"]:
+                problems.append(f"disproportionate proposals {sorted(proposed)}")
+            must = policy.get("must_include_one_of")
+            if must and not proposed & must:
+                problems.append(f"none of {sorted(must)} proposed")
+        elif proposed:
+            problems.append(f"expected no proposals, got {sorted(proposed)}")
+
+        if problems:
+            print(f"{label} FAIL — {'; '.join(problems)}")
+            failures.append(stem)
+        else:
+            print(
+                f"{label} remote={remote['verdict']} "
+                f"(confidence {remote['confidence']}) matches golden + policy -> OK"
+            )
+    except Exception as exc:
+        print(f"{label} FAIL — {type(exc).__name__}: {exc}")
         failures.append(stem)
-        continue
-    # invoke output may wrap the verdict in a response envelope
-    while isinstance(verdict, dict) and "verdict" not in verdict and len(verdict) == 1:
-        verdict = next(iter(verdict.values()))
-    got = verdict.get("verdict")
-    ok = got == want
-    if got == "needs_human":
-        ok = ok and verdict.get("escalate_to_human") is True and not verdict.get("proposed_actions")
-    print(f"{stem}: remote={got} golden={want} -> {'OK' if ok else 'MISMATCH'}")
-    if not ok:
-        failures.append(stem)
+
 sys.exit(1 if failures else 0)
 PY
 
 echo
-echo "E2E PASS — remote behaviour matches the local goldens."
+echo "E2E PASS — remote behaviour matches the local goldens and suite policy."
