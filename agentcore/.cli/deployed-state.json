@@ -1,3 +1,17 @@
 {
-  "targets": {}
+  "targets": {
+    "default": {
+      "resources": {
+        "runtimes": {
+          "StewardsEnquiry": {
+            "runtimeId": "StewardsEnquiry_StewardsEnquiry-JPbm3H7hJ1",
+            "runtimeArn": "arn:aws:bedrock-agentcore:eu-west-2:523698779503:runtime/StewardsEnquiry_StewardsEnquiry-JPbm3H7hJ1",
+            "roleArn": "arn:aws:iam::523698779503:role/AgentCore-StewardsEnquiry-ApplicationAgentStewardsE-lfEu4hk1izMB"
+          }
+        },
+        "stackName": "AgentCore-StewardsEnquiry-default",
+        "deployHash": "7dd6592055513de2"
+      }
+    }
+  }
 }

@@ -15,7 +15,11 @@
       "codeLocation": "app/stewards_enquiry/",
       "runtimeVersion": "PYTHON_3_12",
       "networkMode": "PUBLIC",
-      "protocol": "HTTP"
+      "protocol": "HTTP",
+      "envVars": [
+        { "name": "BEDROCK_MODEL_ID", "value": "eu.anthropic.claude-sonnet-4-6" },
+        { "name": "STEWARD_PROPOSALS_PATH", "value": "/tmp/proposals.jsonl" }
+      ]
     }
   ],
   "memories": [],

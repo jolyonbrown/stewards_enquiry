@@ -1,1 +1,8 @@
-[]
+[
+  {
+    "name": "default",
+    "description": "Limilo dev account, London",
+    "account": "523698779503",
+    "region": "eu-west-2"
+  }
+]

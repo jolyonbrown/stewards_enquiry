@@ -126,26 +126,46 @@ tried out-of-enum actions twice and self-corrected on the tool's rejection.
 
 ## Phase 3 — Deploy to AgentCore Runtime (timebox: 2.5h)
 
-- [ ] Confirm target region supports AgentCore (prefer `eu-west-2`, fall back
+- [x] Confirm target region supports AgentCore (prefer `eu-west-2`, fall back
       `us-west-2`); set `AWS_REGION`
-- [ ] Discover and set `BEDROCK_MODEL_ID` (current Claude Sonnet cross-region
+- [x] Discover and set `BEDROCK_MODEL_ID` (current Claude Sonnet cross-region
       inference profile via `aws bedrock list-inference-profiles`); confirm
       model access is enabled in the Bedrock console
-- [ ] Create the read-only execution role per CLAUDE.md IAM section
-- [ ] Set `STEWARD_PROPOSALS_PATH` to a writable location for the deployed
+- [x] Create the read-only execution role per CLAUDE.md IAM section
+      (see docs/EXECUTION-ROLE.md — live-mode grants deliberately deferred
+      to stretch C; deployed role has zero security-data access)
+- [x] Set `STEWARD_PROPOSALS_PATH` to a writable location for the deployed
       runtime (default is CWD-relative; workdir may be read-only) — PR #1
       review finding
-- [ ] `agentcore deploy` (direct code deploy); resolve any ARM64 wheel issues
+- [x] `agentcore deploy` (direct code deploy); resolve any ARM64 wheel issues
       with the uv platform flags from CLAUDE.md
-- [ ] Enable observability (CloudWatch Transaction Search per current docs);
+- [x] Enable observability (CloudWatch Transaction Search per current docs);
       confirm `agentcore logs` and traces show the full tool sequence
-- [ ] Remote `agentcore invoke` for all three findings matches local golden
+- [x] Remote `agentcore invoke` for all three findings matches local golden
       verdict classes
 
 **Acceptance:** remote invoke ≡ local behaviour; one screenshot/export of a
 trace showing the tool chain saved to `docs/`.
 
-**AC notes:** _(fill in)_
+**AC notes:** Done 2026-07-17. eu-west-2 supports AgentCore (control plane
+verified before deploy). Deployed via `agentcore deploy` (CDK): stack
+`AgentCore-StewardsEnquiry-default`, runtime
+`StewardsEnquiry_StewardsEnquiry-JPbm3H7hJ1`, CodeZip packaged cleanly
+first try — no ARM64 wheel intervention needed. Runtime env carries
+BEDROCK_MODEL_ID (eu.anthropic.claude-sonnet-4-6) and
+STEWARD_PROPOSALS_PATH=/tmp/proposals.jsonl via agentcore.json envVars.
+Execution role inspected and documented in docs/EXECUTION-ROLE.md: Bedrock
+invoke + logs/X-Ray only, no guardduty/cloudtrail/ec2 (live-mode policy
+deferred to stretch C as unused standing privilege); one surplus
+construct-default grant (config-bundle CRUD) documented as a known
+exception. Observability worked out of the box; full tool chain visible —
+docs/trace-ssh-bruteforce.json (97 OTel records, all four tools + our
+structured tool_call lines). **End-to-end deliverable:**
+`scripts/e2e_remote.sh` = offline suite → fresh package + deploy (new
+immutable version) → three remote triages → verdict classes vs goldens;
+full run PASSED: ssh-bruteforce=true_positive, crypto-mining=true_positive,
+tor-recon=needs_human, all matching. `--no-deploy` flag for invoke-only
+mid-demo runs.
 
 ---
 
