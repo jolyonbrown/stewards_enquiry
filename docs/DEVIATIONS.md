@@ -14,6 +14,8 @@ and what we did.
 | 6 | "Do not hardcode a Bedrock model ID from memory" | The official scaffold itself hardcodes `global.anthropic.claude-sonnet-4-5-20250929-v1:0` in `model/load.py` | Discarded that module; Phase 2 reads `BEDROCK_MODEL_ID` from the environment |
 | 7 | Scaffold expected to be minimal | Scaffold ships an MCP client, a skills fetcher, a session LRU cache, and streaming plumbing | Trimmed to a canned entrypoint per the thin-slice invariant; Phase 2 adds only the four tools |
 
+| 8 | "Confirm model access is enabled in the Bedrock console" (Phase 3 checklist) | The Bedrock "Model access" page was retired (observed 2026-07-16): serverless foundation models auto-enable on first invocation in all commercial regions. Anthropic models may additionally require first-time users to submit use-case details; Marketplace-served models need one invocation by a user with Marketplace permissions | No manual enablement step; we confirm access by invoking (playground or first `record_goldens.py` run) and submit the Anthropic use-case form if prompted |
+
 Other observations worth keeping:
 
 - `agentcore create` enforces project names: start with a letter, alphanumeric,

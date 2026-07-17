@@ -128,5 +128,16 @@
     "trace_id": {
       "type": "string"
     }
-  }
+  },
+  "allOf": [
+    {
+      "description": "needs_human is meaningless if nobody is told to look",
+      "if": {
+        "properties": { "verdict": { "const": "needs_human" } }
+      },
+      "then": {
+        "properties": { "escalate_to_human": { "const": true } }
+      }
+    }
+  ]
 }

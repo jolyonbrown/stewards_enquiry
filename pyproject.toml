@@ -30,7 +30,7 @@ target-version = "py312"
 select = ["E", "F", "I", "UP", "B", "SIM"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["main", "telemetry", "tools"]
+known-first-party = ["main", "prompts", "telemetry", "tools", "triage", "verdict"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

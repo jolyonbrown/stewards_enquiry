@@ -13,9 +13,27 @@ import json
 import logging
 import time
 from collections.abc import Callable
+from contextvars import ContextVar
 from typing import Any
 
 logger = logging.getLogger("stewards_enquiry.tools")
+
+# In-memory record of the current triage's successful tool calls, used to
+# cross-check the model's verdict against what actually happened (PR #2
+# review finding: nothing correlated the verdict with the tool trace).
+_trace: ContextVar[list[dict] | None] = ContextVar("steward_tool_trace", default=None)
+
+
+def begin_trace() -> None:
+    _trace.set([])
+
+
+def get_trace() -> list[dict]:
+    return list(_trace.get() or [])
+
+
+def end_trace() -> None:
+    _trace.set(None)
 
 
 def configure_logging() -> None:
@@ -45,7 +63,11 @@ def traced(fn: Callable) -> Callable:
         started = time.perf_counter()
         outcome = "ok"
         try:
-            return fn(*args, **kwargs)
+            result = fn(*args, **kwargs)
+            trace = _trace.get()
+            if trace is not None:
+                trace.append({"tool": fn.__name__, "result": result})
+            return result
         except Exception as exc:
             outcome = f"error:{type(exc).__name__}"
             raise
