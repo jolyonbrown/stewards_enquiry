@@ -89,27 +89,61 @@ knows when not to be confident is the one you can deploy.
 
 ## Deploying to AgentCore Runtime
 
+One-time setup: an AWS account with Bedrock Anthropic access enabled, and
+your own 12-digit account id + region in `agentcore/aws-targets.json`.
+
 ```bash
-# TODO(Phase 3): region + model discovery, execution role, deploy, invoke
+aws sso login --profile <your-profile>      # or any AWS credential method
+export AWS_PROFILE=<your-profile> AWS_REGION=eu-west-2
+
+# discover a current Claude inference profile; set it as BEDROCK_MODEL_ID
+# in agentcore/agentcore.json envVars
+aws bedrock list-inference-profiles --region "$AWS_REGION"
+
+agentcore deploy -y                         # CDK: runtime, role, telemetry (~5 min)
+bash scripts/e2e_remote.sh --no-deploy      # 3 live triages, checked against goldens
 ```
 
-## The release model, demonstrated
+The generated execution role and its honest audit (including three documented
+surplus-privilege follow-ups) are in `docs/EXECUTION-ROLE.md`; a full trace of
+one cloud triage is in `docs/trace-ssh-bruteforce.json`.
+
+## The release model
 
 Runtime versions are immutable; endpoints are named pointers. Releases are a
-pointer move; rollback is the same move backwards.
-
-See `docs/RELEASE-NOTES.md` for the recorded transcript of cutting V(n+1),
-verifying a pinned endpoint stayed put, promoting it, and rolling it back —
-no rebuild involved.
+pointer move; rollback is the same move backwards. Performing that exercise
+end-to-end (pinned `demo` endpoint, V(n+1), symmetric rollback) is PLAN.md
+Phase 4 — the one remaining planned deliverable.
 
 ## What I learned
 
-<!-- TODO(Wrap): ≥3 honest, specific observations about AgentCore's sharp
-edges. Sharp edges, not marketing. -->
-
-- _(pending)_
-- _(pending)_
-- _(pending)_
+- **Verify the platform against itself, not its docs.** In one three-day
+  build: the pip starter toolkit announced its own deprecation (the real CLI
+  is `@aws/agentcore` on npm, with a completely different CDK-based model),
+  and the Bedrock "Model access" console page was retired mid-build. Eight
+  deviations from the written brief are recorded in `docs/DEVIATIONS.md`;
+  the habit of checking live CLI output before writing code paid for itself
+  twice in the first hour.
+- **CodeZip packaging was painless; the packaged filesystem is not.** The
+  feared ARM64 native-wheel problem never materialised. What nearly shipped
+  broken instead: anything your code reads must physically live inside
+  `codeLocation` — our repo-root fixtures and schema would have
+  `FileNotFoundError`'d in production. Caught in review, fixed with the real
+  files inside the app dir and a layout-pinning test.
+- **Generated IAM is convenient, not least-privilege.** The deploy
+  construct's default execution role included write access to a config store
+  the project never uses, log-read access across *all* runtimes in the
+  account, and invoke rights on every Bedrock model. All bounded, none
+  exploitable here — but "trust the vendor default" and "least privilege"
+  are different policies. Audited and tracked in `docs/EXECUTION-ROLE.md`.
+- **Schema validation cannot catch lies — only trace-grounding can.** Under
+  ambiguity the model produced a confident, schema-valid, *false* evidence
+  claim ("zero CloudTrail events" for a principal the fixture showed as
+  active — it had queried the wrong key and dressed the empty result as
+  fact). An independent review caught it against the fixtures; the fix
+  cross-checks every verdict against what the tools actually returned, and
+  fabrication now fails closed. That one finding justified the whole
+  review-gate process.
 
 ## Scope, honestly
 

@@ -150,7 +150,7 @@ trace showing the tool chain saved to `docs/`.
 **AC notes:** Done 2026-07-17. eu-west-2 supports AgentCore (control plane
 verified before deploy). Deployed via `agentcore deploy` (CDK): stack
 `AgentCore-StewardsEnquiry-default`, runtime
-`StewardsEnquiry_StewardsEnquiry-JPbm3H7hJ1`, CodeZip packaged cleanly
+`StewardsEnquiry_StewardsEnquiry-*`, CodeZip packaged cleanly
 first try — no ARM64 wheel intervention needed. Runtime env carries
 BEDROCK_MODEL_ID (eu.anthropic.claude-sonnet-4-6) and
 STEWARD_PROPOSALS_PATH=/tmp/proposals.jsonl via agentcore.json envVars.
@@ -195,7 +195,7 @@ rollback with no rebuild.
 - [ ] Fill README "What I learned" with ≥3 specific, honest observations
 - [ ] Verify the 2-minute demo script below end-to-end, once, cold
 
-**Demo script (for a 30-minute interview, target ≤2 minutes):**
+**Demo script (for a live walkthrough, target ≤2 minutes):**
 
 1. `cat fixtures/findings/ssh-bruteforce.json | head` — "GuardDuty finding in."
 2. Local invoke → show the verdict JSON — "enriched, reasoned, schema-valid."

@@ -99,8 +99,8 @@ knows when not to be confident is the one you can deploy.
 
 ## Demo script
 
-Prep once: `aws sso login --profile limilo`
-then `export AWS_PROFILE=limilo AWS_REGION=eu-west-2`
+Prep once: `aws sso login --profile <your-profile>`
+then `export AWS_PROFILE=<your-profile> AWS_REGION=eu-west-2`
 
 **2 minutes, offline:**
 

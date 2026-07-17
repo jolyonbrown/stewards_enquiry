@@ -8,10 +8,10 @@
 # A fail-closed response, a swapped response, or a disproportionate proposal
 # set FAILS the run (PR #3 review: class-only comparison was spoofable).
 #
-# Needs: AWS credentials (e.g. AWS_PROFILE=limilo), region with AgentCore
+# Needs: AWS credentials (e.g. AWS_PROFILE=<your-profile>), region with AgentCore
 # support configured in agentcore/aws-targets.json. Run from anywhere:
 #
-#   AWS_PROFILE=limilo AWS_REGION=eu-west-2 bash scripts/e2e_remote.sh
+#   AWS_PROFILE=<your-profile> AWS_REGION=eu-west-2 bash scripts/e2e_remote.sh
 #
 # Skip the redeploy (invoke-only, e.g. mid-demo) with: --no-deploy
 set -euo pipefail

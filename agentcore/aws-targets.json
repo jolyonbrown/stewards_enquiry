@@ -1,8 +1,8 @@
 [
   {
     "name": "default",
-    "description": "Limilo dev account, London",
-    "account": "523698779503",
+    "description": "Example target — set your own 12-digit account id and region before deploying",
+    "account": "111122223333",
     "region": "eu-west-2"
   }
 ]
