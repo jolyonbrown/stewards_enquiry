@@ -1,0 +1,32 @@
+{
+  "finding_id": "f-ssh-bruteforce-0001",
+  "verdict": "true_positive",
+  "confidence": 0.93,
+  "severity_assessment": "medium",
+  "summary": "Production instance web-03 (i-0f1e2d3c4b5a69788, eu-west-2a) received 41 inbound SSH brute-force attempts over 3.5 hours from 203.0.113.42, a well-known malicious IP scoring 97/100 with 1,243 threat reports in 90 days and botnet/scanner tags. The connection to TCP/22 is currently unblocked, meaning the attack is ongoing. CloudTrail shows only a single benign S3 GetObject call from the instance's private IP \u2014 no evidence of successful compromise, privilege escalation, or lateral movement at this time. Isolating the instance's security group is the proportionate response; escalation to stop or snapshot the instance is not warranted unless post-compromise activity is subsequently detected.",
+  "evidence": [
+    {
+      "tool": "get_finding",
+      "observation": "41 inbound TCP/22 connection attempts from 203.0.113.42 to i-0f1e2d3c4b5a69788 (web-03, production) over ~3.5 hours (03:14\u201306:41 UTC); connection is NOT blocked; security group web-tier-ssh (sg-0aa11bb22cc33dd44) is permissive to this source."
+    },
+    {
+      "tool": "lookup_ip",
+      "observation": "203.0.113.42 reputation score 97/100 malicious; tagged ssh-bruteforce, botnet, scanner; 1,243 abuse reports in the past 90 days; active as recently as 2026-07-12 (today)."
+    },
+    {
+      "tool": "query_cloudtrail",
+      "observation": "Only one CloudTrail event in 72 hrs for web-tier-profile: a single S3 GetObject from private IP 10.20.1.57 at 05:12 UTC. No credential misuse, no console logins, no lateral movement \u2014 no confirmed post-compromise activity."
+    }
+  ],
+  "proposed_actions": [
+    {
+      "action": "isolate_instance_sg",
+      "target": "sg-0aa11bb22cc33dd44 (attached to i-0f1e2d3c4b5a69788 / web-03, eu-west-2a)",
+      "justification": "IP 203.0.113.42 scores 97/100 malicious with 1,243 reports in 90 days (ssh-bruteforce, botnet tags). GuardDuty logged 41 unblocked brute-force attempts on TCP/22 over 3.5 hrs. No post-compromise CloudTrail activity found, so SG isolation is proportionate \u2014 stops the attack without halting the instance.",
+      "risk_if_wrong": "Legitimate SSH access to web-03 from authorised IPs will be blocked until rules are refined. Recoverable: re-add a scoped ingress rule once authorised source ranges are confirmed.",
+      "requires_approval": true,
+      "status": "pending_approval"
+    }
+  ],
+  "escalate_to_human": false
+}

@@ -1,0 +1,23 @@
+{
+  "finding_id": "f-tor-recon-0003",
+  "verdict": "needs_human",
+  "confidence": 0.55,
+  "severity_assessment": "medium",
+  "summary": "IAM user 'svc-scanner' performed read-only EC2 and STS reconnaissance (DescribeInstances, DescribeSecurityGroups, GetCallerIdentity) and attempted ListBuckets \u2014 all via confirmed Tor exit node 198.51.100.77, which has 12 abuse reports in 90 days. The 72-hour CloudTrail baseline shows this account normally calls DescribeInstances at ~02:00 UTC from a fixed IP (192.0.2.140), with no prior Tor use, indicating a clear behavioural deviation. However, the account name 'svc-scanner' and exclusively read-only API calls are consistent with authorised pentest or audit tooling, and an intentional Tor-sourced assessment cannot be ruled out without human verification.",
+  "evidence": [
+    {
+      "tool": "get_finding",
+      "observation": "Recon:IAMUser/TorIPCaller \u2014 svc-scanner called DescribeInstances (\u00d79), DescribeSecurityGroups (\u00d74), GetCallerIdentity (\u00d71) from Tor exit node 198.51.100.77 (ASN 64499, EXAMPLE-RELAYNET, Frankfurt) in a 13-minute window; 14 events total."
+    },
+    {
+      "tool": "lookup_ip",
+      "observation": "198.51.100.77 confirmed as Tor exit node; reputation score 55; tagged ['tor','anonymiser']; 12 abuse reports in 90 days; active 2025-11-19 to 2026-07-13 (today)."
+    },
+    {
+      "tool": "query_cloudtrail",
+      "observation": "All four Tor-sourced events occurred 07:52\u201307:58 UTC on 2026-07-13; baseline shows DescribeInstances at 02:00 UTC on 2026-07-11 and 2026-07-12 from fixed IP 192.0.2.140 \u2014 no prior Tor usage in 72 hours, and ListBuckets (AccessDenied) adds scope not seen in baseline."
+    }
+  ],
+  "proposed_actions": [],
+  "escalate_to_human": true
+}

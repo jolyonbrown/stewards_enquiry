@@ -15,14 +15,24 @@ from verdict import validate_verdict
 
 GOLDEN_DIR = Path(__file__).parent / "golden"
 
+# "actions" = the proportionate superset a verdict may propose;
+# "must_include_one_of" = the instance/credential-scoped containment the
+# PLAN's intended outcome centres on.
 EXPECTED = {
     "ssh-bruteforce": {
         "verdict": "true_positive",
-        "actions": {"isolate_instance_sg"},
+        "actions": {"isolate_instance_sg", "block_ip_nacl"},
+        "must_include_one_of": {"isolate_instance_sg"},
     },
     "crypto-mining": {
         "verdict": "true_positive",
-        "actions": {"stop_instance", "isolate_instance_sg"},
+        "actions": {
+            "stop_instance",
+            "isolate_instance_sg",
+            "revoke_iam_sessions",
+            "quarantine_snapshot",
+        },
+        "must_include_one_of": {"stop_instance", "isolate_instance_sg"},
         "severity": {"critical", "high"},
     },
     "tor-recon": {
@@ -52,6 +62,9 @@ def test_golden_verdict_class(stem):
     if expected["actions"]:
         assert proposed, f"{stem}: expected a containment proposal, got none"
         assert proposed <= expected["actions"], f"disproportionate proposal(s): {proposed}"
+        must = expected.get("must_include_one_of")
+        if must:
+            assert proposed & must, f"{stem}: none of {must} proposed, got {proposed}"
     else:
         assert not proposed, f"{stem}: expected no proposals, got {proposed}"
 

@@ -1,0 +1,36 @@
+{
+  "finding_id": "f-crypto-mining-0002",
+  "verdict": "true_positive",
+  "confidence": 0.93,
+  "severity_assessment": "critical",
+  "summary": "EC2 instance batch-worker-17 (i-0b9c8d7e6f5a41203, c5.4xlarge) made 3,117 unblocked DNS queries to pool.minexmr.example \u2014 a domain on GuardDuty's threat-intel list associated with Monero mining pools \u2014 over approximately three hours. The compute-optimised instance type is highly attractive for cryptojacking, and no legitimate data-engineering batch workload should query a cryptocurrency mining pool. CloudTrail shows no AWS API calls from the attached IAM instance profile, consistent with a compromised process running silently at the OS level. Security group isolation has been proposed to sever mining traffic whilst preserving the instance for forensic investigation.",
+  "evidence": [
+    {
+      "tool": "get_finding",
+      "observation": "CryptoCurrency:EC2/BitcoinTool.B!DNS severity 8.0; instance i-0b9c8d7e6f5a41203 (c5.4xlarge, tag batch-worker-17) made 3,117 UDP DNS queries to pool.minexmr.example between 2026-07-12T22:03Z and 2026-07-13T01:17Z; DNS request was NOT blocked."
+    },
+    {
+      "tool": "get_finding",
+      "observation": "Domain pool.minexmr.example is listed on GuardDuty's ExampleThreatIntelSet and matches the known MineXMR Monero mining-pool infrastructure pattern, confirming the destination is a crypto-mining pool, not a legitimate service endpoint."
+    },
+    {
+      "tool": "query_cloudtrail",
+      "observation": "Zero AWS API events returned for batch-worker-profile over 72 hours. A compromised mining process typically runs at OS level without needing AWS API calls, so the absence of CloudTrail activity is consistent with \u2014 not contradictory to \u2014 compromise."
+    },
+    {
+      "tool": "lookup_ip",
+      "observation": "Instance public IP 192.0.2.201 has no prior abuse reports; the outbound threat originates from the instance itself querying the mining pool domain, not from an inbound attacker IP, so a clean reputation here is expected and does not reduce confidence."
+    }
+  ],
+  "proposed_actions": [
+    {
+      "action": "isolate_instance_sg",
+      "target": "i-0b9c8d7e6f5a41203 (batch-worker-17, sg-0ee55ff66aa77bb88, vpc-0123456789abcdef0)",
+      "justification": "Instance made 3,117 DNS queries to pool.minexmr.example (known XMR pool, GuardDuty threat-intel list) over ~3 hrs, DNS unblocked. c5.4xlarge is compute-optimised \u2014 prime mining target. No legitimate batch workload queries a mining pool. Isolating the SG severs mining and lateral-movement while preserving the instance for forensics.",
+      "risk_if_wrong": "Removing network access interrupts any legitimate batch job. Data-eng must be notified; the original SG can be re-attached rapidly if cleared, with no data loss.",
+      "requires_approval": true,
+      "status": "pending_approval"
+    }
+  ],
+  "escalate_to_human": false
+}

@@ -80,9 +80,9 @@ planted `stop_instances` call.
       four tools and the triage-policy system prompt
 - [x] Verdict construction + validation against `schemas/verdict.schema.json`;
       fail-closed path emits `needs_human` on validation failure
-- [ ] Run all three fixture findings end-to-end; save outputs to
+- [x] Run all three fixture findings end-to-end; save outputs to
       `tests/golden/`
-- [ ] Intended outcomes (assert loosely — verdict class, not exact wording):
+- [x] Intended outcomes (assert loosely — verdict class, not exact wording):
   - `ssh-bruteforce` → `true_positive`, proportionate containment proposal
     (isolate the instance's security group)
   - `crypto-mining` → `true_positive`, high severity, stop-instance proposal
@@ -103,11 +103,22 @@ wraps the traced functions with correct specs); `verdict.py` validates or
 fails closed to `needs_human` (broad catch: model errors, unparseable output,
 schema violations — never free text, never an exception); `main.py` accepts
 both `{"finding_id": ...}` and the CLI `{"prompt": "<text>"}` wrapper. Every
-triage emits a structured verdict log line. **Remaining for acceptance:** run
-`uv run python scripts/record_goldens.py` with AWS creds + Bedrock model
-access to record `tests/golden/*.verdict.json` (script refuses to record
-fail-closed verdicts), then confirm the golden test enforces the intended
-classes and `proposals.jsonl` holds only `pending_approval` entries.
+triage emits a structured verdict log line.
+
+**Acceptance completed 2026-07-17** against Bedrock
+`eu.anthropic.claude-sonnet-4-6` (eu-west-2, SSO): all three goldens recorded
+and enforcing — ssh-bruteforce → true_positive 0.93 with a single
+isolate_instance_sg proposal; crypto-mining → true_positive 0.93 critical,
+isolate_instance_sg; tor-recon → needs_human 0.55, zero proposals,
+escalate_to_human true. proposals.jsonl: only pending_approval entries.
+103 tests green. Two live-run lessons recorded: (1) fail-closed behaved
+perfectly on a real Bedrock error (Anthropic use-case gate) — three
+schema-valid needs_human verdicts, recorder refused to write them;
+(2) first tor-recon run verdicted true_positive because the default 24h
+CloudTrail window hid svc-scanner's scheduled-scan baseline at 48–72h —
+fixed in the prompt (≥72h window + "if you're telling the owner to confirm
+it's authorised, that's needs_human"), not by re-rolling. The model also
+tried out-of-enum actions twice and self-corrected on the tool's rejection.
 
 ---
 
