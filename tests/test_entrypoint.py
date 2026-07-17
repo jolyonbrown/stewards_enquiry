@@ -59,3 +59,14 @@ def test_invoke_without_finding_id_fails_closed_with_valid_verdict():
     assert verdict["verdict"] == "needs_human"
     assert verdict["finding_id"] == "unknown"
     assert verdict["escalate_to_human"] is True
+
+
+@pytest.mark.parametrize("payload", [[1, 2], [{"finding_id": "x"}], "foo", 42, True, None])
+def test_non_dict_json_payloads_fail_closed_not_500(payload):
+    """PR #2 review (both reviewers): a valid-JSON non-object body reached
+    .get() and raised AttributeError, which the runtime turns into a
+    free-text 500 — the exact failure mode invariant 3 forbids."""
+    verdict = invoke(payload, None)
+    validate_verdict(verdict)
+    assert verdict["verdict"] == "needs_human"
+    assert type(payload).__name__ in verdict["summary"]

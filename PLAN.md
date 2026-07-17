@@ -85,7 +85,9 @@ planted `stop_instances` call.
 - [x] Intended outcomes (assert loosely — verdict class, not exact wording):
   - `ssh-bruteforce` → `true_positive`, proportionate containment proposal
     (isolate the instance's security group)
-  - `crypto-mining` → `true_positive`, high severity, stop-instance proposal
+  - `crypto-mining` → `true_positive`, high severity, instance-scoped
+    containment (stop-instance or isolate-SG; the recorded golden isolates,
+    arguing forensic preservation — accepted in review)
   - `tor-recon` → `needs_human` (plausibly an authorised scan), no
     containment proposal
 - [x] Golden-file test comparing verdict structure and classes (written;

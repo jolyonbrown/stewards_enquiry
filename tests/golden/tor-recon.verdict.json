@@ -3,19 +3,19 @@
   "verdict": "needs_human",
   "confidence": 0.55,
   "severity_assessment": "medium",
-  "summary": "IAM user 'svc-scanner' performed read-only EC2 and STS reconnaissance (DescribeInstances, DescribeSecurityGroups, GetCallerIdentity) and attempted ListBuckets \u2014 all via confirmed Tor exit node 198.51.100.77, which has 12 abuse reports in 90 days. The 72-hour CloudTrail baseline shows this account normally calls DescribeInstances at ~02:00 UTC from a fixed IP (192.0.2.140), with no prior Tor use, indicating a clear behavioural deviation. However, the account name 'svc-scanner' and exclusively read-only API calls are consistent with authorised pentest or audit tooling, and an intentional Tor-sourced assessment cannot be ruled out without human verification.",
+  "summary": "IAM user svc-scanner performed 14 read-only reconnaissance API calls (DescribeInstances, DescribeSecurityGroups, GetCallerIdentity) via confirmed Tor exit node 198.51.100.77, deviating from its normal baseline source IP (192.0.2.140 at ~02:00 UTC on the two preceding days). The principal name strongly suggests an authorised scanner or pentest service account, making the activity plausibly legitimate, but a compromised credential used for pre-attack reconnaissance cannot be ruled out. A human must confirm whether a pentest or red-team exercise was authorised for this account on 2026-07-13 before any containment action is taken.",
   "evidence": [
     {
       "tool": "get_finding",
-      "observation": "Recon:IAMUser/TorIPCaller \u2014 svc-scanner called DescribeInstances (\u00d79), DescribeSecurityGroups (\u00d74), GetCallerIdentity (\u00d71) from Tor exit node 198.51.100.77 (ASN 64499, EXAMPLE-RELAYNET, Frankfurt) in a 13-minute window; 14 events total."
+      "observation": "svc-scanner called DescribeInstances x9, DescribeSecurityGroups x4, GetCallerIdentity x1 (14 total) from Tor IP 198.51.100.77 (ASN 64499 / RelayNet, Frankfurt) between 07:52\u201308:05 UTC on 2026-07-13."
     },
     {
       "tool": "lookup_ip",
-      "observation": "198.51.100.77 confirmed as Tor exit node; reputation score 55; tagged ['tor','anonymiser']; 12 abuse reports in 90 days; active 2025-11-19 to 2026-07-13 (today)."
+      "observation": "198.51.100.77 is a confirmed, currently active Tor exit node (reputation score 55, tagged tor/anonymiser, 12 abuse reports in 90 days, last seen 2026-07-13)."
     },
     {
       "tool": "query_cloudtrail",
-      "observation": "All four Tor-sourced events occurred 07:52\u201307:58 UTC on 2026-07-13; baseline shows DescribeInstances at 02:00 UTC on 2026-07-11 and 2026-07-12 from fixed IP 192.0.2.140 \u2014 no prior Tor usage in 72 hours, and ListBuckets (AccessDenied) adds scope not seen in baseline."
+      "observation": "On 2026-07-11 and 2026-07-12 svc-scanner called DescribeInstances from 192.0.2.140 at ~02:00 UTC \u2014 a stable automated baseline. On 2026-07-13 the source shifted to the Tor IP and included a ListBuckets attempt (AccessDenied), a one-off anomaly against the baseline."
     }
   ],
   "proposed_actions": [],

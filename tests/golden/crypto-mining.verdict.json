@@ -1,33 +1,37 @@
 {
   "finding_id": "f-crypto-mining-0002",
   "verdict": "true_positive",
-  "confidence": 0.93,
-  "severity_assessment": "critical",
-  "summary": "EC2 instance batch-worker-17 (i-0b9c8d7e6f5a41203, c5.4xlarge) made 3,117 unblocked DNS queries to pool.minexmr.example \u2014 a domain on GuardDuty's threat-intel list associated with Monero mining pools \u2014 over approximately three hours. The compute-optimised instance type is highly attractive for cryptojacking, and no legitimate data-engineering batch workload should query a cryptocurrency mining pool. CloudTrail shows no AWS API calls from the attached IAM instance profile, consistent with a compromised process running silently at the OS level. Security group isolation has been proposed to sever mining traffic whilst preserving the instance for forensic investigation.",
+  "confidence": 0.91,
+  "severity_assessment": "high",
+  "summary": "EC2 instance batch-worker-17 (i-0b9c8d7e6f5a41203), a production c5.4xlarge in the data-eng fleet, made 3,117 UDP DNS queries over approximately three hours to pool.minexmr.example, a known XMR cryptocurrency mining pool confirmed on GuardDuty's threat intel list. CloudTrail independently corroborates compromise: the instance profile attempted an anomalous DescribeInstances enumeration call (denied) and a successful GetAuthorizationToken call to ECR, consistent with pulling a mining container image \u2014 neither action is expected from a batch worker. Two proportionate containment actions (security-group isolation and IAM session revocation) have been proposed and are pending human approval; the data-eng team should be consulted to rule out any sanctioned mining workload before execution.",
   "evidence": [
     {
       "tool": "get_finding",
-      "observation": "CryptoCurrency:EC2/BitcoinTool.B!DNS severity 8.0; instance i-0b9c8d7e6f5a41203 (c5.4xlarge, tag batch-worker-17) made 3,117 UDP DNS queries to pool.minexmr.example between 2026-07-12T22:03Z and 2026-07-13T01:17Z; DNS request was NOT blocked."
-    },
-    {
-      "tool": "get_finding",
-      "observation": "Domain pool.minexmr.example is listed on GuardDuty's ExampleThreatIntelSet and matches the known MineXMR Monero mining-pool infrastructure pattern, confirming the destination is a crypto-mining pool, not a legitimate service endpoint."
+      "observation": "GuardDuty type CryptoCurrency:EC2/BitcoinTool.B!DNS, severity 8.0. Instance i-0b9c8d7e6f5a41203 made 3,117 DNS queries to pool.minexmr.example (UDP, not blocked) between 2026-07-12T22:03Z and 2026-07-13T01:17Z. Domain confirmed on ExampleThreatIntelSet threat list."
     },
     {
       "tool": "query_cloudtrail",
-      "observation": "Zero AWS API events returned for batch-worker-profile over 72 hours. A compromised mining process typically runs at OS level without needing AWS API calls, so the absence of CloudTrail activity is consistent with \u2014 not contradictory to \u2014 compromise."
+      "observation": "Within the incident window, batch-worker-profile made a failed DescribeInstances call (Client.UnauthorizedOperation \u2014 anomalous enumeration probe) and a successful ECR GetAuthorizationToken call from 10.20.4.19, consistent with pulling a mining container. No legitimate batch-job API calls were observed in the 72-hour window."
     },
     {
       "tool": "lookup_ip",
-      "observation": "Instance public IP 192.0.2.201 has no prior abuse reports; the outbound threat originates from the instance itself querying the mining pool domain, not from an inbound attacker IP, so a clean reputation here is expected and does not reduce confidence."
+      "observation": "Public IP 192.0.2.201 (the instance's outbound egress IP) has no abuse reports in the last 90 days and is unknown to threat intel. This is expected for the victim's own egress IP and does not weaken the finding."
     }
   ],
   "proposed_actions": [
     {
       "action": "isolate_instance_sg",
-      "target": "i-0b9c8d7e6f5a41203 (batch-worker-17, sg-0ee55ff66aa77bb88, vpc-0123456789abcdef0)",
-      "justification": "Instance made 3,117 DNS queries to pool.minexmr.example (known XMR pool, GuardDuty threat-intel list) over ~3 hrs, DNS unblocked. c5.4xlarge is compute-optimised \u2014 prime mining target. No legitimate batch workload queries a mining pool. Isolating the SG severs mining and lateral-movement while preserving the instance for forensics.",
-      "risk_if_wrong": "Removing network access interrupts any legitimate batch job. Data-eng must be notified; the original SG can be re-attached rapidly if cleared, with no data loss.",
+      "target": "EC2 instance i-0b9c8d7e6f5a41203 (batch-worker-17, sg-0ee55ff66aa77bb88, vpc-0123456789abcdef0)",
+      "justification": "The instance made 3,117 DNS queries over ~3 hours to pool.minexmr.example, a known XMR mining pool domain on GuardDuty's threat intel list. Isolating the security group cuts off the mining pool connection and any C2 channel while preserving the instance for forensic analysis.",
+      "risk_if_wrong": "If this is an authorised cryptocurrency workload, isolating the instance will interrupt production data-engineering batch jobs. The data-eng team (tag: Team=data-eng) should be notified immediately and asked to confirm whether any mining workload is sanctioned.",
+      "requires_approval": true,
+      "status": "pending_approval"
+    },
+    {
+      "action": "revoke_iam_sessions",
+      "target": "IAM instance profile batch-worker-profile (AIPAEXAMPLEBATCHID00), account 111122223333",
+      "justification": "CloudTrail shows the instance profile made an anomalous failed DescribeInstances call (access denied \u2014 likely an enumeration or privilege escalation probe) and a GetAuthorizationToken call to ECR (potentially pulling a mining container image). Revoking active sessions prevents further lateral movement or data exfiltration using the compromised instance's credentials.",
+      "risk_if_wrong": "Revoking sessions will interrupt any legitimate batch jobs currently using this instance profile across the fleet. Scope should be confirmed against the batch-worker-17 instance specifically before applying fleet-wide; consider scoping revocation to the single instance's temporary credentials if tooling permits.",
       "requires_approval": true,
       "status": "pending_approval"
     }

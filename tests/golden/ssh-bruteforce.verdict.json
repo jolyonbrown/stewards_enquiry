@@ -3,27 +3,27 @@
   "verdict": "true_positive",
   "confidence": 0.93,
   "severity_assessment": "medium",
-  "summary": "Production instance web-03 (i-0f1e2d3c4b5a69788, eu-west-2a) received 41 inbound SSH brute-force attempts over 3.5 hours from 203.0.113.42, a well-known malicious IP scoring 97/100 with 1,243 threat reports in 90 days and botnet/scanner tags. The connection to TCP/22 is currently unblocked, meaning the attack is ongoing. CloudTrail shows only a single benign S3 GetObject call from the instance's private IP \u2014 no evidence of successful compromise, privilege escalation, or lateral movement at this time. Isolating the instance's security group is the proportionate response; escalation to stop or snapshot the instance is not warranted unless post-compromise activity is subsequently detected.",
+  "summary": "A well-known malicious IP (203.0.113.42, score 97/100, 1,243 reports in 90 days, tagged botnet and SSH brute-force) made 41 inbound TCP/22 connection attempts against production instance web-03 over approximately 3.5 hours, with port 22 currently unblocked. CloudTrail shows only a single routine S3:GetObject call from the instance profile with no signs of lateral movement or credential abuse, suggesting the instance has not yet been compromised. Two independent signals \u2014 the GuardDuty finding and the IP reputation data \u2014 corroborate this as a genuine, ongoing brute-force attack. Isolating the security group to remove the open-world SSH rule is the recommended immediate action.",
   "evidence": [
     {
       "tool": "get_finding",
-      "observation": "41 inbound TCP/22 connection attempts from 203.0.113.42 to i-0f1e2d3c4b5a69788 (web-03, production) over ~3.5 hours (03:14\u201306:41 UTC); connection is NOT blocked; security group web-tier-ssh (sg-0aa11bb22cc33dd44) is permissive to this source."
+      "observation": "UnauthorizedAccess:EC2/SSHBruteForce \u2014 41 inbound TCP/22 connection attempts from 203.0.113.42 to production instance i-0f1e2d3c4b5a69788 (web-03) between 03:14 and 06:41 UTC. Connection is not blocked; severity 5.3."
     },
     {
       "tool": "lookup_ip",
-      "observation": "203.0.113.42 reputation score 97/100 malicious; tagged ssh-bruteforce, botnet, scanner; 1,243 abuse reports in the past 90 days; active as recently as 2026-07-12 (today)."
+      "observation": "203.0.113.42 scores 97/100 malicious with 1,243 reports in the past 90 days. Tagged: ssh-bruteforce, botnet, scanner. Active as recently as 2026-07-12 (today)."
     },
     {
       "tool": "query_cloudtrail",
-      "observation": "Only one CloudTrail event in 72 hrs for web-tier-profile: a single S3 GetObject from private IP 10.20.1.57 at 05:12 UTC. No credential misuse, no console logins, no lateral movement \u2014 no confirmed post-compromise activity."
+      "observation": "Only one event returned for web-tier-profile over 72 hrs: a routine S3:GetObject from the instance's private IP (10.20.1.57). No anomalous API calls, no lateral movement, and no credential abuse detected."
     }
   ],
   "proposed_actions": [
     {
       "action": "isolate_instance_sg",
-      "target": "sg-0aa11bb22cc33dd44 (attached to i-0f1e2d3c4b5a69788 / web-03, eu-west-2a)",
-      "justification": "IP 203.0.113.42 scores 97/100 malicious with 1,243 reports in 90 days (ssh-bruteforce, botnet tags). GuardDuty logged 41 unblocked brute-force attempts on TCP/22 over 3.5 hrs. No post-compromise CloudTrail activity found, so SG isolation is proportionate \u2014 stops the attack without halting the instance.",
-      "risk_if_wrong": "Legitimate SSH access to web-03 from authorised IPs will be blocked until rules are refined. Recoverable: re-add a scoped ingress rule once authorised source ranges are confirmed.",
+      "target": "sg-0aa11bb22cc33dd44 (web-tier-ssh) on instance i-0f1e2d3c4b5a69788 (web-03, eu-west-2a)",
+      "justification": "41 inbound SSH attempts from 203.0.113.42 over 3.5 hrs; port 22 unblocked. Remote IP scores 97/100 malicious with 1,243 reports in 90 days, tagged botnet/ssh-bruteforce. Removing the open-world SSH rule is the minimum effective action to stop the live attack without affecting instance availability.",
+      "risk_if_wrong": "Platform team SSH access would be disrupted. Restoring access requires adding approved source CIDRs to the security group \u2014 a low-effort, reversible change with no data-loss risk.",
       "requires_approval": true,
       "status": "pending_approval"
     }

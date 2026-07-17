@@ -49,8 +49,9 @@ def golden_path(stem: str) -> Path:
 @pytest.mark.parametrize("stem", sorted(EXPECTED))
 def test_golden_verdict_class(stem):
     path = golden_path(stem)
-    if not path.exists():
-        pytest.skip(f"golden not recorded yet: {path.name} (needs Bedrock credentials)")
+    # Goldens are committed: a missing one is a regression, not a skip
+    # (PR #2 review finding).
+    assert path.exists(), f"golden missing: {path.name} — re-record with scripts/record_goldens.py"
 
     verdict = json.loads(path.read_text())
     expected = EXPECTED[stem]

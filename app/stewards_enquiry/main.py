@@ -48,8 +48,15 @@ def extract_finding_id(payload: dict[str, Any]) -> str | None:
 
 
 @app.entrypoint
-def invoke(payload: dict[str, Any], context: Any) -> dict[str, Any]:
-    finding_id = extract_finding_id(payload or {})
+def invoke(payload: Any, context: Any) -> dict[str, Any]:
+    # Valid JSON that isn't an object (arrays, bare strings, numbers) must
+    # fail closed too, not crash into the runtime's free-text 500 handler.
+    if not isinstance(payload, dict):
+        return fail_closed_verdict(
+            "unknown",
+            reason=f"payload must be a JSON object, got {type(payload).__name__}",
+        )
+    finding_id = extract_finding_id(payload)
     if finding_id is None:
         return fail_closed_verdict(
             "unknown",

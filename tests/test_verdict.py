@@ -54,6 +54,52 @@ def test_proposal_status_other_than_pending_approval_is_schema_invalid():
         validate_verdict({**VALID_VERDICT, "proposed_actions": [action]})
 
 
+# --- cross-field policy rules (PR #2 review: schema-valid ≠ policy-valid) ---
+
+NEEDS_HUMAN = {
+    **VALID_VERDICT,
+    "verdict": "needs_human",
+    "proposed_actions": [],
+    "escalate_to_human": True,
+}
+
+
+def test_needs_human_without_escalation_is_rejected():
+    with pytest.raises(jsonschema.ValidationError):
+        validate_verdict({**NEEDS_HUMAN, "escalate_to_human": False})
+
+
+@pytest.mark.parametrize("verdict_class", ["needs_human", "false_positive"])
+def test_non_actionable_verdicts_must_not_carry_proposals(verdict_class):
+    candidate = {
+        **VALID_VERDICT,
+        "verdict": verdict_class,
+        "escalate_to_human": verdict_class == "needs_human",
+    }
+    with pytest.raises(jsonschema.ValidationError, match="proposals"):
+        validate_verdict(candidate)
+
+
+def test_true_positive_needs_two_distinct_corroborating_tools():
+    single_source = [
+        {"tool": "get_finding", "observation": "one"},
+        {"tool": "get_finding", "observation": "two"},
+    ]
+    with pytest.raises(jsonschema.ValidationError, match="two distinct tools"):
+        validate_verdict({**VALID_VERDICT, "evidence": single_source})
+
+
+def test_nan_confidence_is_rejected():
+    with pytest.raises(jsonschema.ValidationError, match="finite"):
+        validate_verdict({**NEEDS_HUMAN, "confidence": float("nan")})
+
+
+@pytest.mark.parametrize("constant", ["NaN", "Infinity", "-Infinity"])
+def test_extract_rejects_nonstandard_json_constants(constant):
+    with pytest.raises(ValueError, match="non-standard JSON constant"):
+        extract_json_object('{"confidence": ' + constant + "}")
+
+
 def test_extract_plain_json():
     assert extract_json_object('{"a": 1}') == {"a": 1}
 
