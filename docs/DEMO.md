@@ -32,6 +32,53 @@ authority to be useful and provably not enough to be dangerous.
    evidence, and proposals stamped pending_approval. Nothing executes.
    The state machine ends at "a human decided".
 
+### The moving parts (what's AWS, and where)
+
+```
+ you / SOC analyst
+   |  agentcore invoke '{"finding_id": ...}'   (signed with YOUR
+   v                                            IAM identity, not the agent's)
++--------------------------------------------------------------------+
+| AWS account, eu-west-2                                              |
+|                                                                     |
+|  +--------------------------------------------------------------+  |
+|  | Bedrock AGENTCORE RUNTIME  <-- the managed agent host        |  |
+|  | (serverless, one isolated session per triage)                |  |
+|  |                                                              |  |
+|  |  main.py entrypoint                                          |  |
+|  |    \-- triage loop  ----- prompt ---->  Amazon BEDROCK       |  |
+|  |         |           <-- reasoning ---  (Claude Sonnet 4.6)   |  |
+|  |         |                                                    |  |
+|  |         |-- get_finding -------> bundled GuardDuty fixtures  |  |
+|  |         |-- lookup_ip ---------> bundled reputation feed     |  |
+|  |         |-- query_cloudtrail --> bundled audit events        |  |
+|  |         \-- propose_containment: records a proposal.         |  |
+|  |                                  EXECUTES NOTHING.           |  |
+|  |         v                                                    |  |
+|  |  verdict, validated against schema + the actual tool trace   |  |
+|  +--------------------------------------------------------------+  |
+|     |  every step logged/traced          ^  deployed by            |
+|     v                                    |                         |
+|  CLOUDWATCH GenAI Observability     CloudFormation (CDK)           |
+|  (logs + X-Ray traces)              + S3 code artefact             |
+|                                                                     |
+|  IAM execution role: may call Bedrock and write logs. Nothing else. |
++--------------------------------------------------------------------+
+
+ Deliberately NOT connected in v1: GuardDuty and CloudTrail themselves.
+ The findings/audit data are bundled fixtures in GuardDuty's real JSON
+ format, so the demo runs anywhere; live read-only feeds are a documented
+ stretch goal behind the STEWARD_LIVE flag.
+```
+
+| AWS service | Role here |
+|---|---|
+| **Bedrock AgentCore Runtime** | Hosts the agent — serverless, session-isolated, billed only while a triage runs. This is "AgentCore". |
+| **Amazon Bedrock** | Serves the Claude model that does the reasoning |
+| **IAM** | The execution role that *cannot* act — the load-bearing control |
+| **CloudWatch (+ X-Ray)** | Logs and the GenAI Observability trace of every tool call |
+| **CloudFormation + S3 (via CDK)** | Deployment: immutable code versions, one command |
+
 ## Why it's trustworthy — four independent layers
 
 1. **IAM** — the deployed role can invoke the model and write logs. That is
