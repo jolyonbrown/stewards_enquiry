@@ -11,7 +11,7 @@ Role: `AgentCore-StewardsEnquiry-ApplicationAgentStewardsE-*` (created by the
 | `bedrock:InvokeModel`, `InvokeModelWithResponseStream`, `CountTokens` | This account's inference profiles + foundation models | Required — the only way the agent reasons |
 | `logs:*` (create/put/describe/filter/get on log streams) | `/aws/bedrock-agentcore/runtimes/*` log groups only | Required — invariant 5 (traceability) |
 | `xray:PutTelemetryRecords`, `PutTraceSegments`; `logs:DescribeLogGroups` | `*` | Required for OTel traces; X-Ray has no resource-level scoping |
-| `bedrock-agentcore:*ConfigurationBundle*` (incl. Create/Update/Delete) | `configuration-bundle/*` resources | **Surplus.** Construct default for a feature this project does not use. Includes mutating verbs — the one deviation from "read-only everywhere". Bounded to AgentCore's own config-bundle store; no reach into any security-relevant resource. Tracked as a deliberate, documented exception rather than silently accepted. |
+| `bedrock-agentcore:*ConfigurationBundle*` (incl. Create/Update/Delete) | `configuration-bundle/*` resources | **Surplus.** Construct default for a feature this project does not use. The codebase never calls these APIs (invariant 1 governs the code, and the CI guard enforces that); this is unused standing IAM privilege on the deployed principal — a real but bounded mutation capability, limited to AgentCore's own config-bundle store with no reach into any security-relevant resource. Tracked as a deliberate, documented exception rather than silently accepted. |
 
 ## What is deliberately absent
 

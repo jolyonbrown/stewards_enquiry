@@ -9,6 +9,11 @@ changes nothing, by design.
 The returned dict is shaped exactly like a ``proposed_actions`` item in
 schemas/verdict.schema.json so Phase 2 can embed it verbatim; the JSONL
 record carries two extra audit fields (proposal_id, created_at).
+
+Deployment note: on AgentCore Runtime, STEWARD_PROPOSALS_PATH points at
+session-ephemeral /tmp — a per-session scratch record, not a durable audit
+log. The durable trail is the verdict envelope returned to the caller plus
+the OTel trace of the propose_containment call.
 """
 
 import hashlib

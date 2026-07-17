@@ -49,7 +49,13 @@ for stem in ("ssh-bruteforce", "crypto-mining", "tor-recon"):
         print(f"{stem}: NO JSON IN RESPONSE")
         failures.append(stem)
         continue
-    verdict = json.loads(text[start : end + 1])
+    try:
+        verdict = json.loads(text[start : end + 1])
+    except json.JSONDecodeError as exc:
+        # e.g. CLI banner or metadata objects around the verdict (PR #3 review)
+        print(f"{stem}: UNPARSEABLE RESPONSE ({exc})")
+        failures.append(stem)
+        continue
     # invoke output may wrap the verdict in a response envelope
     while isinstance(verdict, dict) and "verdict" not in verdict and len(verdict) == 1:
         verdict = next(iter(verdict.values()))
